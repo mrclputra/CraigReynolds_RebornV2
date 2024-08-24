@@ -18,7 +18,7 @@ MonoBehaviour:
   maxNeighbors: 0
   boidViewFOV: 0
   boidViewDistance: 0
-  boidMaxAcceleration: 18
+  boidMaxAcceleration: 14
   boidMaxVelocity: 6
   wanderRadius: 3
   wanderWeight: 2

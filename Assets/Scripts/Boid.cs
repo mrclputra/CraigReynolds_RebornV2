@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Boid : MonoBehaviour
 {
-    private Vector3 position;
-    private Vector3 velocity;
-    private Vector3 acceleration;
+    public Vector3 position;
+    public Vector3 velocity;
+    public Vector3 acceleration;
 
     [SerializeField] WorldManager world;
     [SerializeField] Config config;
