@@ -14,71 +14,76 @@ public class BoidManager : MonoBehaviour
     [SerializeField] private GameObject boidPrefab;
     [SerializeField] private Material lineMaterial;
 
-    private List<GameObject> boidObjects = new List<GameObject>();
-    private NativeArray<Boid.Data> boidsData;
-    private NativeArray<Vector3> randomValues;
-    private TransformAccessArray transformAccessArray;
+    private List<Boid> boids = new List<Boid>();            // used for object reference
+    private NativeArray<Boid.Data> boidsData;               // used for parallelization
+    private NativeArray<Vector3> wanderVectors;             // used in Wander()
+    private TransformAccessArray transformAccessArray;      // used to update transforms
 
     private bool shouldDraw = false;
 
     private void Awake()
     {
+        // initialize nativearray and transformaccessarray
+        transformAccessArray = new TransformAccessArray(config.boidsCount);
+        boidsData = new NativeArray<Boid.Data>(config.boidsCount, Allocator.Persistent);
+        wanderVectors = new NativeArray<Vector3>(config.boidsCount, Allocator.Persistent);
+
         // spawn in boids
         for (int i = 0; i < config.boidsCount; i++)
         {
-            Vector3 spawnPosition = UnityEngine.Random.insideUnitSphere * (config.spawnRadius / 1.5f);
-            GameObject obj = Instantiate(boidPrefab, spawnPosition, Quaternion.identity);
+            GameObject obj = Instantiate(
+                boidPrefab,
+                UnityEngine.Random.insideUnitSphere * (config.spawnRadius / 2f),
+                Quaternion.identity
+            );
             obj.gameObject.SetActive(true);
-            boidObjects.Add(obj);
-        }
+            boids.Add(obj.GetComponent<Boid>());
 
-        // init nativearray and transformaccessarray
-        boidsData = new NativeArray<Boid.Data>(boidObjects.Count, Allocator.Persistent);
-        transformAccessArray = new TransformAccessArray(boidObjects.Count);
-        randomValues = new NativeArray<Vector3>(boidObjects.Count, Allocator.Persistent);
-
-        for (int i = 0;i < boidObjects.Count;i++)
-        {
-            var transform = boidObjects[i].transform;
-            transformAccessArray.Add(transform);
-            var boid = boidObjects[i].GetComponent<Boid>();
-            boidsData[i] = boid.data;
-
-            randomValues[i] = new Vector3(
+            // setup nativearray and transformaccessarray
+            transformAccessArray.Add(boids[i].transform);
+            boidsData[i] = boids[i].GetComponent<Boid>().data;
+            wanderVectors[i] = new Vector3(
                 UnityEngine.Random.Range(-1f, 1f),
                 UnityEngine.Random.Range(-1f, 1f),
                 UnityEngine.Random.Range(-1f, 1f)
-            );
+            ).normalized; // normalize the vector for consistent wandering behavior
         }
     }
 
     private void Update()
     {
+        for (int i = 0; i < wanderVectors.Length; i++)
+        {
+            wanderVectors[i] = new Vector3(
+                UnityEngine.Random.Range(-1f, 1f),
+                UnityEngine.Random.Range(-1f, 1f),
+                UnityEngine.Random.Range(-1f, 1f)
+            ).normalized;
+        }
+
         BoidJob job = new BoidJob
         {
             // raw data parameters to pass into the job
             boids = boidsData,
-            wanderWeight = config.wanderWeight,
-            wanderRadius = config.wanderRadius,
+            wanderVectors = wanderVectors,
+
+            deltaTime = Time.deltaTime,
             boundSize = config.boundSize,
-            boidMaxVelocity = config.boidMaxVelocity,
-            boidMaxAcceleration = config.boidMaxAcceleration,
-            randomValues = randomValues,
-            deltaTime = Time.deltaTime
+
+            maxVelocity = config.boidMaxVelocity,
+            maxAcceleration = config.boidMaxAcceleration,
+            wanderWeight = config.wanderWeight,
+            wanderRadius = config.wanderRadius
         };
 
         JobHandle jobHandle = job.Schedule(transformAccessArray);
         jobHandle.Complete();
 
-        // update boid data in gameobjects
-        for (int i = 0; i < boidObjects.Count; i++)
+        for (int i = 0; i < boids.Count; i++)
         {
-            var boid = boidObjects[i].GetComponent<Boid>();
-            boid.data = boidsData[i];
-            boidObjects[i].transform.position = boid.data.position;
-            boidObjects[i].GetComponent<Boid>().data = boid.data;
+            boids[i].GetComponent<Boid>().data = boidsData[i];
+            boids[i].transform.position = boidsData[i].position;
         }
-
         shouldDraw = true;
     }
 
@@ -87,15 +92,15 @@ public class BoidManager : MonoBehaviour
         // ensure draw calls are synced with update
         if (!shouldDraw) return;
 
-        foreach(GameObject boidObj in boidObjects)
+        foreach(Boid boid in boids)
         {
             GL.PushMatrix();
             GL.Begin(GL.LINES);
             lineMaterial.SetPass(0);
 
             GL.Color(Color.red);
-            GL.Vertex(boidObj.transform.position);
-            GL.Vertex(boidObj.transform.position + boidObj.GetComponent<Boid>().data.velocity);
+            GL.Vertex(boid.transform.position);
+            GL.Vertex(boid.transform.position + boid.data.velocity);
 
             GL.End();
             GL.PopMatrix();
@@ -108,62 +113,6 @@ public class BoidManager : MonoBehaviour
     {
         transformAccessArray.Dispose();
         boidsData.Dispose();
-        randomValues.Dispose();
-    }
-}
-
-
-[BurstCompile]
-public struct BoidJob : IJobParallelForTransform
-{
-    public NativeArray<Boid.Data> boids;
-    public NativeArray<Vector3> randomValues;
-    public float wanderWeight;
-    public float wanderRadius;
-    public float boundSize;
-    public float boidMaxVelocity;
-    public float boidMaxAcceleration;
-    public float deltaTime;
-
-    public void Execute(int index, TransformAccess transform)
-    {
-        Boid.Data boid = boids[index];
-
-        // Calculate wander and avoid bounds
-        Vector3 wander = Wander(ref boid, randomValues[index]);
-        Vector3 avoidBounds = AvoidBounds(ref boid);
-
-        // Combine forces and update position
-        Vector3 acceleration = Vector3.ClampMagnitude(wander * wanderWeight + avoidBounds, boidMaxAcceleration);
-        Vector3 velocity = Vector3.ClampMagnitude(boid.velocity + acceleration * deltaTime, boidMaxVelocity);
-        boid.position += velocity * deltaTime;
-
-        // Apply updates
-        boid.velocity = velocity;
-        boid.acceleration = acceleration;
-
-        // Set the transform position
-        transform.position = boid.position;
-        boids[index] = boid;
-    }
-
-    private Vector3 Wander(ref Boid.Data boid, Vector3 randomValue)
-    {
-        // Apply wander force using precomputed random value
-        boid.wanderTarget += randomValue.normalized;
-        return Vector3.ClampMagnitude(boid.wanderTarget, wanderRadius).normalized;
-    }
-
-    private Vector3 AvoidBounds(ref Boid.Data boid)
-    {
-        // Calculate avoidance vector
-        Vector3 avoidanceVector = Vector3.zero;
-        float edgeDistance = boundSize * 0.3f;
-
-        avoidanceVector.x = boid.position.x < -edgeDistance ? 1 : boid.position.x > edgeDistance ? -1 : 0;
-        avoidanceVector.y = boid.position.y < -edgeDistance ? 1 : boid.position.y > edgeDistance ? -1 : 0;
-        avoidanceVector.z = boid.position.z < -edgeDistance ? 1 : boid.position.z > edgeDistance ? -1 : 0;
-
-        return avoidanceVector * 100f;
+        wanderVectors.Dispose();
     }
 }
