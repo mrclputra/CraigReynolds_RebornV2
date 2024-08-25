@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: Configuration
   m_EditorClassIdentifier: 
   boundSize: 20
-  spawnRadius: 20
-  boidsCount: 700
+  spawnRadius: 30
+  boidsCount: 750
   maxNeighbors: 0
   boidViewFOV: 0
   boidViewDistance: 0
   boidMaxAcceleration: 14
-  boidMaxVelocity: 6
-  wanderRadius: 3
-  wanderWeight: 2
+  boidMaxVelocity: 4
+  wanderRadius: 2
+  wanderWeight: 1
   cohesionWeight: 0
   alignmentWeight: 0
   separationWeight: 0

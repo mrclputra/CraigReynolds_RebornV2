@@ -363,6 +363,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config: {fileID: 11400000, guid: 98a3d0cc0b661a54a8a0e9888d576649, type: 2}
   boidPrefab: {fileID: 1382954596}
+  lineMaterial: {fileID: 2100000, guid: f61bc5921d6dae441b39e2604eb823dd, type: 2}
 --- !u!1 &1910664317
 GameObject:
   m_ObjectHideFlags: 0

@@ -93,7 +93,7 @@ TrailRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9202086967351674103}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -106,7 +106,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 369ea203bef1335449770894ca86e2df, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -207,5 +207,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   world: {fileID: 0}
   config: {fileID: 11400000, guid: 98a3d0cc0b661a54a8a0e9888d576649, type: 2}
-  lineMaterial: {fileID: 2100000, guid: f61bc5921d6dae441b39e2604eb823dd, type: 2}
-  trailMaterial: {fileID: 2100000, guid: 369ea203bef1335449770894ca86e2df, type: 2}
+  velocity: {x: 0, y: 0, z: 0}
+  acceleration: {x: 0, y: 0, z: 0}
+  wanderTarget: {x: 0, y: 0, z: 0}
