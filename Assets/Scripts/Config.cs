@@ -31,6 +31,7 @@ public class Config : ScriptableObject
 
     public void Awake()
     {
-        Application.targetFrameRate = 144;
+        // uncap framerate
+        Application.targetFrameRate = int.MaxValue;
     }
 }
