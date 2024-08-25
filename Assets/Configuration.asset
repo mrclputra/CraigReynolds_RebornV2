@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Configuration
   m_EditorClassIdentifier: 
   boundSize: 20
-  spawnRadius: 1
-  boidsCount: 1200
+  spawnRadius: 20
+  boidsCount: 750
   maxNeighbors: 0
   boidViewFOV: 0
   boidViewDistance: 0

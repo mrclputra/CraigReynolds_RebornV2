@@ -8,25 +8,27 @@ using Unity.Burst;
 using Unity.Collections;
 
 [BurstCompile]
-public class BoidManager : MonoBehaviour
+public class BoidManager_Parallel : MonoBehaviour
 {
     [SerializeField] private Config config;
     [SerializeField] private GameObject boidPrefab;
     [SerializeField] private Material lineMaterial;
 
-    private List<Boid> boids = new List<Boid>();            // used for object reference
-    private NativeArray<Boid.Data> boidsData;               // used for parallelization
-    private NativeArray<Vector3> wanderVectors;             // used in Wander()
+    private List<Boid_Parallel> boids = new List<Boid_Parallel>();            // used for object reference
+    private NativeArray<Boid_Parallel.Data> boidsData;               // used for parallelization
     private TransformAccessArray transformAccessArray;      // used to update transforms
 
     private bool shouldDraw = false;
+    private Unity.Mathematics.Random random;
 
     private void Awake()
     {
         // initialize nativearray and transformaccessarray
         transformAccessArray = new TransformAccessArray(config.boidsCount);
-        boidsData = new NativeArray<Boid.Data>(config.boidsCount, Allocator.Persistent);
-        wanderVectors = new NativeArray<Vector3>(config.boidsCount, Allocator.Persistent);
+        boidsData = new NativeArray<Boid_Parallel.Data>(config.boidsCount, Allocator.Persistent);
+
+        // initialize the random generator with a seed
+        random = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(1, int.MaxValue));
 
         // spawn in boids
         for (int i = 0; i < config.boidsCount; i++)
@@ -37,35 +39,20 @@ public class BoidManager : MonoBehaviour
                 Quaternion.identity
             );
             obj.gameObject.SetActive(true);
-            boids.Add(obj.GetComponent<Boid>());
+            boids.Add(obj.GetComponent<Boid_Parallel>());
 
             // setup nativearray and transformaccessarray
             transformAccessArray.Add(boids[i].transform);
-            boidsData[i] = boids[i].GetComponent<Boid>().data;
-            wanderVectors[i] = new Vector3(
-                UnityEngine.Random.Range(-1f, 1f),
-                UnityEngine.Random.Range(-1f, 1f),
-                UnityEngine.Random.Range(-1f, 1f)
-            ).normalized; // normalize the vector for consistent wandering behavior
+            boidsData[i] = boids[i].GetComponent<Boid_Parallel>().data;
         }
     }
 
     private void Update()
     {
-        for (int i = 0; i < wanderVectors.Length; i++)
-        {
-            wanderVectors[i] = new Vector3(
-                UnityEngine.Random.Range(-1f, 1f),
-                UnityEngine.Random.Range(-1f, 1f),
-                UnityEngine.Random.Range(-1f, 1f)
-            ).normalized;
-        }
-
-        BoidJob job = new BoidJob
+        BoidJob_Parallel job = new BoidJob_Parallel
         {
             // raw data parameters to pass into the job
             boids = boidsData,
-            wanderVectors = wanderVectors,
 
             deltaTime = Time.deltaTime,
             boundSize = config.boundSize,
@@ -73,7 +60,9 @@ public class BoidManager : MonoBehaviour
             maxVelocity = config.boidMaxVelocity,
             maxAcceleration = config.boidMaxAcceleration,
             wanderWeight = config.wanderWeight,
-            wanderRadius = config.wanderRadius
+            wanderRadius = config.wanderRadius,
+
+            random = random
         };
 
         JobHandle jobHandle = job.Schedule(transformAccessArray);
@@ -81,7 +70,7 @@ public class BoidManager : MonoBehaviour
 
         for (int i = 0; i < boids.Count; i++)
         {
-            boids[i].GetComponent<Boid>().data = boidsData[i];
+            boids[i].GetComponent<Boid_Parallel>().data = boidsData[i];
             boids[i].transform.position = boidsData[i].position;
         }
         shouldDraw = true;
@@ -92,7 +81,7 @@ public class BoidManager : MonoBehaviour
         // ensure draw calls are synced with update
         if (!shouldDraw) return;
 
-        foreach(Boid boid in boids)
+        foreach (Boid_Parallel boid in boids)
         {
             GL.PushMatrix();
             GL.Begin(GL.LINES);
@@ -100,7 +89,7 @@ public class BoidManager : MonoBehaviour
 
             GL.Color(Color.red);
             GL.Vertex(boid.transform.position);
-            GL.Vertex(boid.transform.position + boid.data.velocity);
+            GL.Vertex(boid.transform.position + (boid.data.velocity / 2));
 
             GL.End();
             GL.PopMatrix();
@@ -113,6 +102,5 @@ public class BoidManager : MonoBehaviour
     {
         transformAccessArray.Dispose();
         boidsData.Dispose();
-        wanderVectors.Dispose();
     }
 }

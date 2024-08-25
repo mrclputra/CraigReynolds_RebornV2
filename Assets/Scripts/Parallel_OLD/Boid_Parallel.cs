@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
-public class Boid : MonoBehaviour
+public class Boid_Parallel : MonoBehaviour
 {
     // this list is updated every frame used for vector calculations, to be implemented
     // public List<Boid> neighbors = new List<Boid>();
@@ -12,17 +13,15 @@ public class Boid : MonoBehaviour
         public Vector3 velocity;
         public Vector3 acceleration;
 
-        public Vector3 wanderTarget;    // this is consistent, changes bit every frame
-        public Vector3 wanderVector;    // this is random, different every frame
+        public Vector3 wanderTarget;    // this is consistent, changes a bit every frame
 
         // constructor
-        public Data(Vector3 position, Vector3 velocity, Vector3 acceleration, Vector3 wanderTarget, Vector3 wanderVector)
+        public Data(Vector3 position, Vector3 velocity, Vector3 acceleration, Vector3 wanderTarget)
         {
             this.position = position;
             this.velocity = velocity;
             this.acceleration = acceleration;
             this.wanderTarget = wanderTarget;
-            this.wanderVector = wanderVector;
         }
     }
 

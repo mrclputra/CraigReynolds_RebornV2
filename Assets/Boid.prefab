@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7160945614330917567}
   - component: {fileID: 9036862106381727477}
   - component: {fileID: 8502034611322234493}
-  - component: {fileID: 8611453945925817993}
+  - component: {fileID: 3536082586784921693}
   m_Layer: 0
   m_Name: Boid
   m_TagString: Untagged
@@ -193,7 +193,7 @@ TrailRenderer:
   m_MinVertexDistance: 0.1
   m_Autodestruct: 0
   m_Emitting: 1
---- !u!114 &8611453945925817993
+--- !u!114 &3536082586784921693
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -202,11 +202,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 9202086967351674103}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aea004fcebe27b94ca6b0bdf0ad704a0, type: 3}
+  m_Script: {fileID: 11500000, guid: e190eda76cefc764eba93d42b5cc137e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 0}
-  config: {fileID: 11400000, guid: 98a3d0cc0b661a54a8a0e9888d576649, type: 2}
-  velocity: {x: 0, y: 0, z: 0}
-  acceleration: {x: 0, y: 0, z: 0}
-  wanderTarget: {x: 0, y: 0, z: 0}

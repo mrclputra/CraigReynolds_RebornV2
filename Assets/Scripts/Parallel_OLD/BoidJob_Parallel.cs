@@ -6,10 +6,9 @@ using UnityEngine;
 using UnityEngine.Jobs;
 
 [BurstCompile]
-public struct BoidJob : IJobParallelForTransform
+public struct BoidJob_Parallel : IJobParallelForTransform
 {
-    public NativeArray<Boid.Data> boids;
-    public NativeArray<Vector3> wanderVectors;
+    public NativeArray<Boid_Parallel.Data> boids;
 
     // environment variables
     public float deltaTime;
@@ -22,27 +21,26 @@ public struct BoidJob : IJobParallelForTransform
     public float wanderRadius;
     // add more variables here in the future
 
+    public Unity.Mathematics.Random random;
+
     public void Execute(int index, TransformAccess transform)
     {
         // select a boid from data array to process
-        Boid.Data boid = boids[index];
+        Boid_Parallel.Data boid = boids[index];
 
         // calculate movement
         Vector3 acceleration = Vector3.ClampMagnitude(Combine(ref boid), maxAcceleration);
         Vector3 velocity = Vector3.ClampMagnitude(boid.velocity + acceleration * deltaTime, maxVelocity);
-        boid.position = transform.position;
-        boid.position += velocity * deltaTime;
 
         // apply updates
         boid.velocity = velocity;
         boid.acceleration = acceleration;
         transform.position = boid.position;
-        boid.wanderVector = wanderVectors[index];
         boids[index] = boid; // reassign, is this necessary?
     }
 
     // implement vector operations below
-    private Vector3 Combine(ref Boid.Data boid)
+    private Vector3 Combine(ref Boid_Parallel.Data boid)
     {
         // combines all vector operations
         Vector3 combineVector  = Vector3.zero;
@@ -54,14 +52,20 @@ public struct BoidJob : IJobParallelForTransform
         return combineVector.normalized;
     }
 
-    private Vector3 Wander(ref Boid.Data boid)
+    private Vector3 Wander(ref Boid_Parallel.Data boid)
     {
+        Vector3 randomVector = new Vector3(
+            random.NextFloat(-1f, 1f),
+            random.NextFloat(-1f, 1f),
+            random.NextFloat(-1f, 1f)
+        ).normalized;
+
         // calculate wander vector
-        boid.wanderTarget += boid.wanderVector;
+        boid.wanderTarget += randomVector;
         return Vector3.ClampMagnitude(boid.wanderTarget, wanderRadius).normalized;
     }
 
-    private Vector3 AvoidBounds(ref Boid.Data boid)
+    private Vector3 AvoidBounds(ref Boid_Parallel.Data boid)
     {
         // calculate avoidance0 vector
         Vector3 avoidanceVector = Vector3.zero;

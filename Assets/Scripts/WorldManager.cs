@@ -3,9 +3,8 @@ using UnityEngine;
 public class WorldManager : MonoBehaviour
 {
     [SerializeField] private Config config;
-    [SerializeField] private float axisLength;
-
     [SerializeField] private Material lineMaterial;
+    [SerializeField] private float axisLength;
 
     private void Awake()
     {
