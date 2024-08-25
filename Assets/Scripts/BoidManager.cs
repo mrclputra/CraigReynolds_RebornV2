@@ -40,9 +40,6 @@ public class BoidManager : MonoBehaviour
         {
             Boid boid = boidObj.GetComponent<Boid>();
 
-            // update neighbors list
-            boid.neighbors = GetNeighbors(boidObj);
-
             // calculate acceleration
             Vector3 acceleration = Vector3.ClampMagnitude(Combine(boid), config.boidMaxAcceleration);
             Vector3 velocity = Vector3.ClampMagnitude(boid.velocity + acceleration * Time.deltaTime, config.boidMaxVelocity);
@@ -58,28 +55,28 @@ public class BoidManager : MonoBehaviour
         }
     }
 
-    private List<Boid> GetNeighbors(GameObject targetBoidObj)
-    {
-        Boid targetBoid = targetBoidObj.GetComponent<Boid>();
-        List<Boid> neighbors = new List<Boid>();
-        float radiusSquared = Mathf.Pow(config.boidViewDistance, 2); // use squared radius for distance comparison
+    //private List<Boid> GetNeighbors(GameObject targetBoidObj)
+    //{
+    //    Boid targetBoid = targetBoidObj.GetComponent<Boid>();
+    //    List<Boid> neighbors = new List<Boid>();
+    //    float radiusSquared = Mathf.Pow(config.boidViewDistance, 2); // use squared radius for distance comparison
 
-        foreach (GameObject boidObj in boids)
-        {
-            if (boidObj != targetBoidObj) // Ignore the boid itself
-            {
-                Boid boid = boidObj.GetComponent<Boid>();
-                float distanceSquared = (boid.position - targetBoid.position).sqrMagnitude;
+    //    foreach (GameObject boidObj in boids)
+    //    {
+    //        if (boidObj != targetBoidObj) // Ignore the boid itself
+    //        {
+    //            Boid boid = boidObj.GetComponent<Boid>();
+    //            float distanceSquared = (boid.position - targetBoid.position).sqrMagnitude;
 
-                if (distanceSquared <= radiusSquared)
-                {
-                    neighbors.Add(boid);
-                }
-            }
-        }
+    //            if (distanceSquared <= radiusSquared)
+    //            {
+    //                neighbors.Add(boid);
+    //            }
+    //        }
+    //    }
 
-        return neighbors;
-    }
+    //    return neighbors;
+    //}
 
     private Vector3 Combine(Boid boid)
     {

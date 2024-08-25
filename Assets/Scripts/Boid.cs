@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Boid : MonoBehaviour
 {
-    public List<Boid> neighbors = new List<Boid>();
+    //public List<Boid> neighbors = new List<Boid>();
 
     public Vector3 position;
     public Vector3 velocity;
