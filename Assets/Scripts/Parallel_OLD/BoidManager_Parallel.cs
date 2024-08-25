@@ -14,9 +14,9 @@ public class BoidManager_Parallel : MonoBehaviour
     [SerializeField] private GameObject boidPrefab;
     [SerializeField] private Material lineMaterial;
 
-    private List<Boid_Parallel> boids = new List<Boid_Parallel>();            // used for object reference
-    private NativeArray<Boid_Parallel.Data> boidsData;               // used for parallelization
-    private TransformAccessArray transformAccessArray;      // used to update transforms
+    private List<Boid_Parallel> boids = new List<Boid_Parallel>();  // used for object reference
+    private NativeArray<Boid_Parallel.Data> boidsData;              // used for parallelization
+    private TransformAccessArray transformAccessArray;              // used to update transforms
 
     private bool shouldDraw = false;
     private Unity.Mathematics.Random random;

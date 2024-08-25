@@ -28,10 +28,4 @@ public class Config : ScriptableObject
     public bool cohesionEnabled = true;
     public bool alignmentEnabled = true;
     public bool separationEnabled = true;
-
-    public void Awake()
-    {
-        // uncap framerate
-        Application.targetFrameRate = int.MaxValue;
-    }
 }

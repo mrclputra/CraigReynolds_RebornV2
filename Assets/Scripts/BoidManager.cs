@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class BoidManager : MonoBehaviour
@@ -9,8 +10,10 @@ public class BoidManager : MonoBehaviour
     [SerializeField] private Material lineMaterial;
 
     private List<Boid> boids = new List<Boid>();
-
     private bool shouldDraw = false; // line draw flag
+
+    private static readonly System.Random random = new System.Random();
+    private static readonly object randomLock = new object();
 
     private void Awake()
     {
@@ -30,12 +33,20 @@ public class BoidManager : MonoBehaviour
     private void Update()
     {
         // calculate every boid position in boids
-        foreach (Boid boid in boids)
+        //foreach (Boid boid in boids)
+        //{
+        //    // calculate movement
+        //    boid.acceleration = Vector3.ClampMagnitude(Combine(boid), config.boidMaxAcceleration);
+        //    boid.velocity = Vector3.ClampMagnitude(boid.velocity + boid.acceleration * Time.deltaTime, config.boidMaxVelocity);
+        //}
+
+        float deltaTime = Time.deltaTime;
+
+        Parallel.ForEach(boids, boid =>
         {
-            // calculate movement
             boid.acceleration = Vector3.ClampMagnitude(Combine(boid), config.boidMaxAcceleration);
-            boid.velocity = Vector3.ClampMagnitude(boid.velocity + boid.acceleration * Time.deltaTime, config.boidMaxVelocity);
-        }
+            boid.velocity = Vector3.ClampMagnitude(boid.velocity + boid.acceleration * deltaTime, config.boidMaxVelocity);
+        });
 
         shouldDraw = true;
     }
@@ -54,13 +65,15 @@ public class BoidManager : MonoBehaviour
 
     private Vector3 Wander(Boid boid)
     {
-        Vector3 randomVector = new Vector3(
-            Random.Range(-1f, 1f),
-            Random.Range(-1f, 1f),
-            Random.Range(-1f, 1f)
-        );
+        float x, y, z;
+        lock (randomLock)
+        {
+            x = (float)(random.NextDouble() * 2.0 - 1.0);
+            y = (float)(random.NextDouble() * 2.0 - 1.0);
+            z = (float)(random.NextDouble() * 2.0 - 1.0);
+        }
 
-        return Vector3.ClampMagnitude(boid.wanderTarget += randomVector, config.wanderRadius).normalized;
+        return Vector3.ClampMagnitude(boid.wanderTarget += new Vector3(x, y, z), config.wanderRadius).normalized;
     }
 
     private Vector3 AvoidBounds(Boid boid)

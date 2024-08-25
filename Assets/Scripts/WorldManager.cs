@@ -6,20 +6,7 @@ public class WorldManager : MonoBehaviour
     [SerializeField] private Material lineMaterial;
     [SerializeField] private float axisLength;
 
-    private void Awake()
-    {
-
-    }
-
-    private void Start()
-    {
-
-    }
-
-    private void Update()
-    {
-        
-    }
+    // setup target framerate here?
 
     private void OnRenderObject()
     {
