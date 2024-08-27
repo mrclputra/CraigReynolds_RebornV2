@@ -1,7 +1,9 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using UnityEngine;
+using System.Threading;
+using UnityEngine.UIElements;
 
 public class BoidManager : MonoBehaviour
 {
@@ -32,23 +34,47 @@ public class BoidManager : MonoBehaviour
 
     private void Update()
     {
-        // calculate every boid position in boids
-        //foreach (Boid boid in boids)
-        //{
-        //    // calculate movement
-        //    boid.acceleration = Vector3.ClampMagnitude(Combine(boid), config.boidMaxAcceleration);
-        //    boid.velocity = Vector3.ClampMagnitude(boid.velocity + boid.acceleration * Time.deltaTime, config.boidMaxVelocity);
-        //}
-
         float deltaTime = Time.deltaTime;
 
+        // manage each boid script
         Parallel.ForEach(boids, boid =>
         {
-            boid.acceleration = Vector3.ClampMagnitude(Combine(boid), config.boidMaxAcceleration);
-            boid.velocity = Vector3.ClampMagnitude(boid.velocity + boid.acceleration * deltaTime, config.boidMaxVelocity);
+            //UnityEngine.Debug.Log($"Boid processing on thread {Thread.CurrentThread.ManagedThreadId}");
+            
+            // update neighbor list of boid
+            boid.neighbors = GetNeighbors(boid, config.boidViewDistance);
+
+            // compute velocity and acceleration, and update
+            // no transformations here
+            Vector3 velocity = boid.velocity + boid.acceleration * deltaTime;
+            boid.velocity = Vector3.ClampMagnitude(velocity, config.boidMaxVelocity);
+
+            Vector3 acceleration = Combine(boid);
+            boid.acceleration = Vector3.ClampMagnitude(acceleration, config.boidMaxAcceleration);
         });
 
         shouldDraw = true;
+    }
+
+    private List<Boid> GetNeighbors(Boid boid, float radius)
+    {
+        List<Boid> neighbors = new List<Boid>();
+
+        // return list of boids in a radius
+        // use the boids list to iterate
+        foreach(Boid otherBoid in boids)
+        {
+            float distance = Vector3.Distance(boid.position, otherBoid.position);
+            if(distance < radius)
+            {
+                neighbors.Add(otherBoid);
+            }
+        }
+
+        // remove self
+        neighbors.Remove(boid);
+
+        return neighbors;
     }
 
     // boid vector stuff
@@ -56,9 +82,19 @@ public class BoidManager : MonoBehaviour
     {
         Vector3 result = Vector3.zero;
 
-        result +=
-            AvoidBounds(boid) + // temporary disable
-            Wander(boid) * config.wanderWeight;
+        if (config.wanderEnabled)
+            result += Wander(boid) * config.wanderWeight;
+        if (config.cohesionEnabled)
+            result += Cohesion(boid) * config.cohesionWeight;
+        if (config.alignmentEnabled)
+            result += Alignment(boid) * config.alignmentWeight;
+        if (config.separationEnabled)
+            result += Separation(boid) * config.separationWeight;
+        result += AvoidBounds(boid);
+
+        //result +=
+        //    AvoidBounds(boid) + // temporary disable
+        //    Wander(boid) * config.wanderWeight;
 
         return result.normalized;
     }
@@ -86,6 +122,58 @@ public class BoidManager : MonoBehaviour
         avoidanceVector.z = boid.position.z < -edgeDistance ? 1 : boid.position.z > edgeDistance ? -1 : 0;
 
         return avoidanceVector.normalized * 100f; // adjust multiplier
+    }
+
+    private Vector3 Cohesion(Boid boid)
+    {
+        Vector3 cohesionVector = Vector3.zero;
+
+        if (boid.neighbors == null || boid.neighbors.Count == 0)
+            return cohesionVector;
+
+        foreach(Boid neighbor in boid.neighbors)
+        {
+            // sum positions
+            cohesionVector += boid.position;
+        }
+
+        cohesionVector /= boid.neighbors.Count; // calculate average position of neighbors
+        cohesionVector -= boid.position;        // get direction towards said position
+        return cohesionVector.normalized;       // normalize and return
+    }
+
+    private Vector3 Alignment(Boid boid)
+    {
+        Vector3 alignmentVector = Vector3.zero;
+
+        if (boid.neighbors == null || boid.neighbors.Count == 0)
+            return alignmentVector;
+
+        foreach(Boid neighbor in boid.neighbors)
+        {
+            // sum velocities of neighbors
+            alignmentVector += neighbor.velocity;
+        }
+
+        alignmentVector /= boid.neighbors.Count;
+        return alignmentVector.normalized;
+    }
+
+    private Vector3 Separation(Boid boid)
+    {
+        Vector3 separationVector = Vector3.zero;
+
+        if(boid.neighbors == null || boid.neighbors.Count == 0)
+            return separationVector;
+
+        foreach(Boid neighbor in boid.neighbors)
+        {
+            Vector3 target = boid.position - neighbor.position;
+            if (target.magnitude > 0)
+                separationVector += target.normalized / target.sqrMagnitude;
+        }
+
+        return separationVector.normalized;
     }
 
     private void OnRenderObject()

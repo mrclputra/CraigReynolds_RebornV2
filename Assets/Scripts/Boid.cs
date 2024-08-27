@@ -22,9 +22,16 @@ public class Boid : MonoBehaviour
         wanderTarget = Vector3.zero;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         position += velocity * Time.deltaTime;
         transform.position = position;
+
+        // update rotation
+        if(velocity != Vector3.zero )
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(velocity);
+            transform.rotation = targetRotation;
+        }
     }
 }

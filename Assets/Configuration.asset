@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a9dcebc64cfcda44a5bfbb2ebfd655a, type: 3}
   m_Name: Configuration
   m_EditorClassIdentifier: 
-  boundSize: 20
-  spawnRadius: 20
-  boidsCount: 5000
+  boundSize: 16
+  spawnRadius: 16
+  boidsCount: 750
   maxNeighbors: 0
   boidViewFOV: 0
-  boidViewDistance: 0
+  boidViewDistance: 4
   boidMaxAcceleration: 14
   boidMaxVelocity: 4
   wanderRadius: 2
   wanderWeight: 1
-  cohesionWeight: 0
-  alignmentWeight: 0
-  separationWeight: 0
+  cohesionWeight: 2
+  alignmentWeight: 2
+  separationWeight: 2
   wanderEnabled: 1
   cohesionEnabled: 1
   alignmentEnabled: 1
